@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="din">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dinka AI · upgraded</title>
+  <style>
+    :root {
+      --bg: #1a1a1e;
+      --panel: #28282e;
+      --panel-soft: #32323a;
+      --line: #3f3f48;
+      --text: #f0f0f2;
+      --muted: #a0a0aa;
+      --accent: #6d8cff;
+      --accent-glow: #6d8cff33;
+      --radius-xl: 26px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow: hidden;
+    }
+
+    .app {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding-top: env(safe-area-inset-top, 0px);
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ----- header ----- */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .title {
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 0%, #b0b8ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      white-space: nowrap;
+    }
+
+    .pick {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.82rem;
+      border-radius: 30px;
+      padding: 6px 28px 6px 14px;
+      max-width: 46vw;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .pick:hover {
+      border-color: var(--accent);
+      background-color: var(--panel-soft);
+    }
+
+    .pick option {
+      background: #28282e;
+      color: #f0f0f2;
+      padding: 8px;
+    }
+
+    .tools {
+      display: flex;
+      gap: 6px;
+    }
+
+    .ic {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, transform 0.1s;
+      position: relative;
+    }
+
+    .ic:hover {
+      background: var(--panel);
+      color: #fff;
+    }
+
+    .ic:active {
+      transform: scale(0.92);
+    }
+
+    .ic.off {
+      color: var(--muted);
+    }
+
+    .ic.off::after {
+      content: '';
+      position: absolute;
+      width: 60%;
+      height: 2px;
+      background: var(--muted);
+      transform: rotate(-45deg);
+      border-radius: 2px;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    /* ----- main chat area ----- */
+    main {
+      flex: 1;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      padding: 0 4px;
+    }
+
+    main::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    main::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    main::-webkit-scrollbar-thumb {
+      background: var(--line);
+      border-radius: 8px;
+    }
+
+    main::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+
+    .col {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 16px 18px 28px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* empty state */
+    .empty {
+      min-height: 52dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 10px;
+      padding: 20px 0;
+    }
+
+    .empty h1 {
+      font-size: clamp(3rem, 14vw, 5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      background: linear-gradient(135deg, #ffffff 0%, #8a9eff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 30px var(--accent-glow));
+    }
+
+    .empty p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 400px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 28px;
+    }
+
+    .chip {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 30px;
+      padding: 12px 22px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.92rem;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chip:hover {
+      background: var(--panel-soft);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--accent);
+    }
+
+    .chip:active {
+      transform: translateY(0);
+    }
+
+    .chip:empty {
+      display: none;
+    }
+
+    /* messages */
+    .msg {
+      display: flex;
+      margin: 20px 0;
+      animation: slideIn 0.25s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .msg.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      background: var(--accent);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 22px 22px 6px 22px;
+      max-width: 80%;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      box-shadow: 0 4px 16px rgba(109, 140, 255, 0.25);
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+
+    .msg.bot {
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .av {
+      flex: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6d8cff, #a855f7);
+      display: grid;
+      place-items: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 2px;
+      box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--line);
+    }
+
+    .body {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .txt {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      padding: 8px 0;
+      font-size: 0.98rem;
+      line-height: 1.6;
+    }
+
+    .acts {
+      margin-top: 6px;
+      height: 32px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .msg.bot:hover .acts {
+      opacity: 1;
+    }
+
+    .acts .ic {
+      width: 32px;
+      height: 32px;
+      color: var(--muted);
+      border-radius: 8px;
+    }
+
+    .acts .ic:hover {
+      color: var(--text);
+      background: var(--panel);
+    }
+
+    .err .txt {
+      color: #ff8a8a;
+    }
+
+    .dots span {
+      animation: bounce 1.2s infinite;
+      display: inline-block;
+      font-size: 1.6rem;
+      line-height: 1;
+      margin: 0 1px;
+    }
+
+    .dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes bounce {
+      0%, 60%, 100% {
+        opacity: 0.25;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-4px);
+      }
+    }
+
+    /* ----- footer / composer ----- */
+    footer {
+      padding: 0 14px calc(12px + env(safe-area-inset-bottom, 0px));
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+
+    .composer {
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 8px 8px 8px 22px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .composer:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow), 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    textarea {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font: inherit;
+      resize: none;
+      max-height: 160px;
+      padding: 10px 0;
+      line-height: 1.5;
+      font-size: 0.98rem;
+      scrollbar-width: thin;
+    }
+
+    textarea::placeholder {
+      color: var(--muted);
+    }
+
+    .round {
+      flex: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, opacity 0.15s;
+      box-shadow: 0 4px 12px rgba(109, 140, 255, 0.3);
+    }
+
+    .round:hover:not(:disabled) {
+      background: #5a7aff;
+      transform: scale(1.05);
+    }
+
+    .round:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .round:disabled {
+      opacity: 0.35;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .round.rec {
+      animation: pulse 1.4s infinite;
+      background: #ff5a7a;
+      box-shadow: 0 0 0 0 rgba(255, 90, 122, 0.5);
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 90, 122, 0.5);
+      }
+      70% {
+        box-shadow: 0 0 0 16px rgba(255, 90, 122, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 90, 122, 0);
+      }
+    }
+
+    .fine {
+      max-width: 780px;
+      margin: 10px auto 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.75rem;
+      min-height: 1.2em;
+      letter-spacing: 0.01em;
+    }
+
+    /* toast / notice */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--panel-soft);
+      color: var(--text);
+      border: 1px solid var(--line);
+      padding: 12px 24px;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+      animation: toastIn 0.25s ease;
+      pointer-events: none;
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    /* responsive */
+    @media (max-width: 500px) {
+      .title {
+        font-size: 1rem;
+      }
+      .pick {
+        font-size: 0.75rem;
+        max-width: 38vw;
+        padding: 5px 24px 5px 10px;
+      }
+      .ic {
+        width: 36px;
+        height: 36px;
+      }
+      .col {
+        padding: 10px 12px 20px;
+      }
+      .bubble {
+        max-width: 88%;
+      }
+      .chip {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+      }
+      .empty h1 {
+        font-size: clamp(2.6rem, 18vw, 3.6rem);
+      }
+      .empty p {
+        font-size: 0.95rem;
+      }
+      .composer {
+        padding-left: 16px;
+      }
+      .round {
+        width: 38px;
+        height: 38px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="left">
+        <div class="title">Dinka AI</div>
+        <select id="model" class="pick" aria-label="Model"></select>
+      </div>
+      <div class="tools">
+        <button class="ic" id="mute" aria-label="Gol">
+          <svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/></svg>
+        </button>
+        <button class="ic" id="new" aria-label="Wëu wël">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="scroll">
+      <div class="col" id="col">
+        <div class="empty" id="empty">
+          <h1 id="hi">Loidi</h1>
+          <p id="sub">Yeŋö lëu bï ya kony rɔtdu tëne?</p>
+          <div class="chips">
+            <button class="chip" id="c1"></button>
+            <button class="chip" id="c2"></button>
+            <button class="chip" id="c3"></button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="composer">
+        <textarea id="box" rows="1" placeholder="Cöör wël"></textarea>
+        <button class="round" id="act" aria-label="Cöör">
+          <svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+        </button>
+      </div>
+      <p class="fine" id="fine"></p>
+    </footer>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const API = (new URLSearchParams(location.search).get("api") || location.origin).replace(/\/$/, "");
+
+    // ---------- UI strings in Dinka Bor (din) ----------
+    // English text is kept only as the key. Server translation is optional refinement.
+    const EN = {
+      sub: "How can I help you today?",
+      ph: "Write a message",
+      fine: "Dinka AI can make mistakes. Check important information.",
+      c1: "Tell me about South Sudan",
+      c2: "Help me write a message",
+      c3: "Teach me something new",
+      listening: "Listening…",
+      err: "Something went wrong. Please try again.",
+      nocatch: "I did not catch that. Please speak again.",
+      mic: "Please allow the microphone.",
+      newchat: "New chat",
+      sound: "Sound",
+      fix: "Correct this reply",
+      fixprompt: "Write the correct Dinka Bor"
+    };
+
+    // Hardcoded Dinka Bor (din) — shown immediately, refined from server if possible.
+    const DIK = {
+      sub: "Yeŋö lëu bï ya kony rɔtdu tëne?",
+      ph: "Cöör wël",
+      fine: "Dinka AI alëu bï bɛ̈n yic. Nuɛ̈ɛ̈th ye kɔc cï yic ee rot looi.",
+      c1: "Toŋë ye yök apɛi",
+      c2: "Kony ëm bï wël cöör",
+      c3: "Many ëm yic kënë"
+    };
+
+    const OVERRIDES = { hi: "Loidi" };
+
+    // Start with the full Dinka set — no network round-trip required.
+    let T = { ...EN, ...DIK, ...OVERRIDES };
+    const t = k => T[k] ?? "";
+
+    // icons
+    const ICON = {
+      mic: '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+      send: '<svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+      stop: '<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>',
+      edit: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+      speak: '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>'
+    };
+
+    // apply UI strings
+    function apply() {
+      $("hi").textContent = t("hi");
+      $("sub").textContent = t("sub");
+      $("box").placeholder = recording ? t("listening") : t("ph");
+      $("fine").textContent = t("fine");
+      ["c1", "c2", "c3"].forEach(k => $(k).textContent = t(k));
+      $("mute").title = t("sound");
+      $("new").title = t("newchat");
+    }
+
+    // Refine from server (optional). On any error we keep the hardcoded Dinka.
+    async function loadStrings() {
+      // Keep the reviewed Dinka Bor strings shipped with this frontend. Do not
+      // overwrite them with machine translations on every page load.
+      T = { ...EN, ...DIK, ...OVERRIDES };
+      apply();
+    }
+
+    // ---------- API helpers ----------
+    async function post(path, body, raw) {
+      const r = await fetch(API + path, raw
+        ? { method: "POST", headers: { "Content-Type": "audio/wav" }, body }
+        : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+      );
+      if (!r.ok) {
+        let message = "http " + r.status;
+        try {
+          const payload = await r.json();
+          if (typeof payload.detail === "string" && payload.detail.trim()) message = payload.detail;
+        } catch (_) {}
+        throw new Error(message);
+      }
+      return r;
+    }
+
+    const ENW = new Set("the is are was a an i you me my we it to of in on and or what how why who can do does please hello hi help tell about for with this that your".split(" "));
+    function detect(s) {
+      const w = s.toLowerCase().match(/[a-z']+/g) || [];
+      if (!w.length) return "dik";
+      return w.filter(x => ENW.has(x)).length / w.length >= 0.25 ? "en" : "dik";
+    }
+
+    // ---------- Chat UI ----------
+    const col = $("col"), scroll = $("scroll"), box = $("box"), act = $("act");
+    let model = null, session = null, busy = false, soundOn = true, current = null, recording = false;
+
+    function bottom() { scroll.scrollTop = scroll.scrollHeight; }
+
+    function addUser(text) {
+      const m = document.createElement("div");
+      m.className = "msg user";
+      const b = document.createElement("div");
+      b.className = "bubble";
+      b.textContent = text;
+      m.appendChild(b);
+      col.appendChild(m);
+      bottom();
+    }
+
+    function addBot() {
+      const m = document.createElement("div");
+      m.className = "msg bot";
+      m.innerHTML = '<div class="av">D</div><div class="body"><div class="txt"><span class="dots"><span>.</span><span>.</span><span>.</span></span></div><div class="acts"></div></div>';
+      col.appendChild(m);
+      bottom();
+      return { el: m, txt: m.querySelector(".txt"), acts: m.querySelector(".acts") };
+    }
+
+    function typeOut(el, text) {
+      return new Promise(res => {
+        el.textContent = "";
+        let i = 0;
+        const tick = () => {
+          i = Math.min(text.length, i + 2);
+          el.textContent = text.slice(0, i);
+          bottom();
+          i < text.length ? setTimeout(tick, 14) : res();
+        };
+        tick();
+      });
+    }
+
+    function stopAudio() {
+      if (current) { current.pause(); current = null; }
+    }
+
+    async function fetchAudio(text) {
+      try {
+        return URL.createObjectURL(await (await post("/api/speak", { text: text.slice(0, 400) })).blob());
+      } catch (e) { return null; }
+    }
+
+    function play(url) {
+      if (!url) return;
+      stopAudio();
+      current = new Audio(url);
+      current.play().catch(() => {});
+    }
+
+    function addReplay(row, english, dinka, pending) {
+      let url = null, text = dinka;
+      const b = document.createElement("button");
+      b.className = "ic";
+      b.innerHTML = ICON.speak;
+      b.title = t("sound");
+      b.onclick = async () => {
+        if (!url) url = (await pending) || await fetchAudio(text);
+        play(url);
+      };
+      const e = document.createElement("button");
+      e.className = "ic";
+      e.innerHTML = ICON.edit;
+      e.title = t("fix");
+      e.onclick = async () => {
+        const fixed = (window.prompt(t("fixprompt"), text) || "").trim();
+        if (!fixed || fixed === text) return;
+        try {
+          await post("/api/correction-submissions", { english, model_output: dinka, dinka_bor: fixed, kind: "reply" });
+          text = fixed;
+          row.txt.textContent = fixed;
+          url = null;
+          pending = null;
+          window.alert("Thank you. Your Dinka Bor suggestion was submitted for review.");
+        } catch (err) {
+          window.alert(err.message === "http 429" ? "Too many suggestions. Please try again later." : t("err"));
+        }
+      };
+      row.acts.append(b, e);
+    }
+
+    async function send(text) {
+      text = (text ?? box.value).trim();
+      if (!text || busy) return;
+      box.value = "";
+      resize();
+      $("empty").style.display = "none";
+      addUser(text);
+      busy = true;
+      updateAct();
+      stopAudio();
+      const row = addBot();
+      try {
+        const j = await (await post("/api/chat", {
+          message: text,
+          lang: detect(text),
+          session_id: session,
+          model: model
+        })).json();
+        session = j.session_id;
+        const pending = soundOn ? fetchAudio(j.reply_dinka) : null;
+        await typeOut(row.txt, j.reply_dinka);
+        addReplay(row, j.reply_english, j.reply_dinka, pending);
+        if (pending) play(await pending);
+      } catch (e) {
+        row.el.classList.add("err");
+        row.txt.textContent = e.message || t("err");
+      }
+      busy = false;
+      updateAct();
+    }
+
+    // ---------- Composer ----------
+    function resize() {
+      box.style.height = "auto";
+      box.style.height = Math.min(box.scrollHeight, 160) + "px";
+    }
+
+    function updateAct() {
+      if (recording) {
+        act.innerHTML = ICON.stop;
+        act.className = "round rec";
+        act.disabled = false;
+        return;
+      }
+      const has = box.value.trim().length > 0;
+      act.className = "round";
+      act.innerHTML = has ? ICON.send : ICON.mic;
+      act.disabled = busy;
+    }
+
+    box.addEventListener("input", () => { resize(); updateAct(); });
+    box.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        send();
+      }
+    });
+
+    ["c1", "c2", "c3"].forEach(k => $(k).onclick = () => send(t(k)));
+
+    // ---------- Voice input ----------
+    let rec = null, chunks = [];
+
+    function wavFrom(pcm, rate) {
+      const v = new DataView(new ArrayBuffer(44 + pcm.length * 2));
+      const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+      w(0, "RIFF"); v.setUint32(4, 36 + pcm.length * 2, true); w(8, "WAVEfmt ");
+      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+      w(36, "data"); v.setUint32(40, pcm.length * 2, true);
+      for (let i = 0; i < pcm.length; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, pcm[i])) * 32767, true);
+      return new Blob([v], { type: "audio/wav" });
+    }
+
+    async function toWav(blob) {
+      const buf = await new AudioContext().decodeAudioData(await blob.arrayBuffer());
+      const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(buf.duration * 16000)), 16000);
+      const src = off.createBufferSource();
+      src.buffer = buf;
+      src.connect(off.destination);
+      src.start();
+      return wavFrom((await off.startRendering()).getChannelData(0), 16000);
+    }
+
+    function notice(text) {
+      $("empty").style.display = "none";
+      const row = addBot();
+      row.el.classList.add("err");
+      row.txt.textContent = text;
+    }
+
+    async function toggleMic() {
+      if (recording) {
+        rec.stop();
+        return;
+      }
+      let stream;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+        notice("Voice recording is not supported in this browser. Try a current browser over HTTPS.");
+        return;
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e) {
+        notice(t("mic"));
+        return;
+      }
+      stopAudio();
+      chunks = [];
+      rec = new MediaRecorder(stream);
+      rec.ondataavailable = e => chunks.push(e.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach(x => x.stop());
+        recording = false;
+        apply();
+        updateAct();
+        try {
+          const wav = await toWav(new Blob(chunks));
+          const text = ((await (await post("/api/listen", wav, true)).json()).text || "").trim();
+          text ? send(text) : notice(t("nocatch"));
+        } catch (e) { notice(t("err")); }
+      };
+      rec.start();
+      recording = true;
+      apply();
+      updateAct();
+    }
+
+    act.onclick = () => {
+      if (recording || box.value.trim() === "") toggleMic();
+      else send();
+    };
+
+    // ---------- Header buttons ----------
+    $("mute").onclick = () => {
+      soundOn = !soundOn;
+      $("mute").classList.toggle("off", !soundOn);
+      if (!soundOn) stopAudio();
+    };
+
+    $("new").onclick = async () => {
+      stopAudio();
+      if (session) {
+        try { await fetch(API + "/api/session/" + session, { method: "DELETE" }); } catch (e) {}
+      }
+      session = null;
+      col.querySelectorAll(".msg").forEach(m => m.remove());
+      $("empty").style.display = "";
+    };
+
+    // ---------- Models ----------
+    async function loadModels() {
+      const sel = $("model");
+      try {
+        const response = await fetch(API + "/api/models");
+        if (!response.ok) throw new Error("models unavailable");
+        const j = await response.json();
+        sel.innerHTML = "";
+        j.models.forEach(m => {
+          const o = document.createElement("option");
+          o.value = m.id;
+          o.textContent = m.label;
+          sel.appendChild(o);
+        });
+        let saved = null;
+        try { saved = localStorage.getItem("dinka_model"); } catch (e) {}
+        model = j.models.some(m => m.id === saved) ? saved : j.default;
+        sel.value = model;
+      } catch (e) { sel.style.display = "none"; }
+      sel.onchange = () => {
+        model = sel.value;
+        try { localStorage.setItem("dinka_model", model); } catch (e) {}
+      };
+    }
+
+    // ---------- boot ----------
+    apply();
+    updateAct();
+    loadStrings();
+    loadModels();
+  </script>
+</body>
+</html>

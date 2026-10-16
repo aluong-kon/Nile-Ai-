@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+artifacts/
+bor_model/
+data/correction_submissions.jsonl
+corpus/*.jsonl
+!corpus/pairs.example.jsonl
